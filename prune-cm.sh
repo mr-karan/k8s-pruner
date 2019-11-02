@@ -5,23 +5,20 @@ set -o errtrace  # trace ERR through 'time command' and other functions
 
 
 dry_run=false
-verbose=false
 programname=$0
 
 # display help text.
 print_usage() {
     echo "usage: $programname [-dvh]"
     echo "  -d      enable dry run. Running it with dry run will only list the configmaps to be deleted, it won't actually delete them"
-    echo "  -v      enable verbose logging"
     echo "  -h      display help (this page)"
     exit 1
 }
 
 # parse optional args and flags.
-while getopts 'dvh' flag; do
+while getopts 'dh' flag; do
   case "${flag}" in
     d) dry_run=true ;;
-    v) verbose=true ;;
     *) print_usage
        exit 1 ;;
   esac
@@ -30,7 +27,6 @@ done
 # sends a message to webhook URL with body `{text:...}` in case the script fails at any point.
 function alertOnFailure(){
     if [ ! -z "$ALERT_WEBHOOK_URL" ]; then
-        echo "I am set"
         curl --header "Content-Type: application/json" --request POST --data '{"text":"Error while pruning unused configmaps"}' $ALERT_WEBHOOK_URL
     fi
 }
@@ -88,7 +84,7 @@ function pruneInactiveConfigMaps() {
     do
         echo "Deleting unused configmap $cm present in namespace $1"
         if [ "$dry_run" != true ] ; then
-            kubectl delete configmap $cm -n $1
+            curl -sSk -X DELETE -H "Authorization: Bearer $KUBE_TOKEN" --url "${KUBE_API_URL}/v1/namespaces/${1}/configmaps/$cm"
         fi
     done
 }
