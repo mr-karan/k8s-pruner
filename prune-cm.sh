@@ -43,10 +43,20 @@ while getopts 'abf:v' flag; do
 done
 
 
+KUBE_TOKEN=$(cat /var/run/secrets/kubernetes.io/serviceaccount/token)
+KUBE_API_URL="https://$KUBERNETES_SERVICE_HOST:$KUBERNETES_PORT_443_TCP_PORT/api"
+
+function checkRequiredVariables() {
+    if [ -z "$KUBE_TOKEN" ]; then
+        echo "Missing required value of KUBE_TOKEN"
+        exit 1
+    fi
+}
+
 function getAllNamespaces() {
     echo "Fetching all namespaces"
     # Filter out all kube* namespaces since they are actually not managed by end users.
-    ALL_NAMESPACES=( $(kubectl get ns -o json |jq -r '.items[].metadata | select(.name | contains("kube") | not) | .name') )
+    ALL_NAMESPACES=( $(curl -sSk -H "Authorization: Bearer $KUBE_TOKEN" --url "${KUBE_API_URL}/v1/namespaces"  |jq -r '.items[].metadata | select(.name | contains("kube") | not) | .name') )
 }
 
 # function filterNamespaces() {
@@ -55,12 +65,12 @@ function getAllNamespaces() {
 
 function getAllConfigMaps() {
     echo "Fetching all configmaps listed in namespace $1"
-    ALL_CONFIGMAPS=( $(kubectl get cm -n $1 -o json | jq -r '.items[].metadata.name') )
+    ALL_CONFIGMAPS=( $(curl -sSk -H "Authorization: Bearer $KUBE_TOKEN" --url "${KUBE_API_URL}/v1/namespaces/${1}/configmaps" | jq -r '.items[].metadata.name') )
 }
 
 function getActiveConfigMaps() {
     echo "Fetching only active configmaps listed in namespace $1"
-    USED_CONFIGMAPS=( $(kubectl get pods -n $1 -o json | jq -r '.items[].spec.volumes[]?.configMap.name' | grep -v null || true | sort | uniq) )
+    USED_CONFIGMAPS=( $(curl -sSk -H "Authorization: Bearer $KUBE_TOKEN" --url "${KUBE_API_URL}/v1/namespaces/${1}/pods" | jq -r '.items[].spec.volumes[]?.configMap.name' | grep -v null || true | sort | uniq) )
 }
 
 function getInactiveConfigMaps() {
@@ -74,10 +84,14 @@ function pruneInactiveConfigMaps() {
         # kubectl delete configmap $cm -n $1
     done
 }
- 
+
+checkRequiredVariables
+
 # fetch list of namespaces
 getAllNamespaces
 # filterNamespaces
+
+echo $ALL_NAMESPACES
 
 for ns in "${ALL_NAMESPACES[@]}"
 do
