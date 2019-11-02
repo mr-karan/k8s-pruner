@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/usr/bin/env sh
 
 set -o pipefail  # trace ERR through pipes
 set -o errtrace  # trace ERR through 'time command' and other functions
