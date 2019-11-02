@@ -1,0 +1,16 @@
+apiVersion: batch/v1beta1
+kind: CronJob
+metadata:
+  name: delete-unused-configmaps
+  namespace: k8s-pruner
+spec:
+  schedule: "*/1 * * * *"
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          serviceAccountName: sa-prune-resources
+          containers:
+          - name: prune-configs
+            image: mrkaran/k8s-pruner:latest
+          restartPolicy: OnFailure
