@@ -47,8 +47,8 @@ function error() {
 trap 'error ${LINENO} ${?}' ERR
 
 # set default variables.
-# KUBE_TOKEN=$(cat /var/run/secrets/kubernetes.io/serviceaccount/token)
-# KUBE_API_URL="https://$KUBERNETES_SERVICE_HOST:$KUBERNETES_PORT_443_TCP_PORT/api"
+KUBE_TOKEN=$(cat /var/run/secrets/kubernetes.io/serviceaccount/token)
+KUBE_API_URL="https://$KUBERNETES_SERVICE_HOST:$KUBERNETES_PORT_443_TCP_PORT/api"
 
 # check if all required variables are set.
 function checkRequiredVariables() {
