@@ -1,0 +1,22 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: pruner-deployment
+  namespace: k8s-pruner
+  labels:
+    app: pruner
+spec:
+  serviceAccountName: sa-prune-resources
+  replicas: 1
+  selector:
+    matchLabels:
+      app: pruner
+  template:
+    metadata:
+      labels:
+        app: pruner
+    spec:
+      containers:
+      - name: pruner
+        image: mrkaran/k8s-pruner:latest
+        command: ['sh', '-c', 'echo Hello Kubernetes! && sleep 36000000']
