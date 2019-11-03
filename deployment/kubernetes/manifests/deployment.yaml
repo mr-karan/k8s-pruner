@@ -6,7 +6,6 @@ metadata:
   labels:
     app: pruner
 spec:
-  serviceAccountName: sa-prune-resources
   replicas: 1
   selector:
     matchLabels:
@@ -16,6 +15,7 @@ spec:
       labels:
         app: pruner
     spec:
+      serviceAccountName: sa-prune-resources
       containers:
       - name: pruner
         image: mrkaran/k8s-pruner:latest
